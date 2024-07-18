@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sql-statefulset
+  namespace: default
+spec:
+  serviceName: "sql"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sql
+  template:
+    metadata:
+      labels:
+        app: sql
+    spec:
+      containers:
+      - name: sql
+        image: mysql:latest
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sql-secret1
+              key: password
+        - name: MYSQL_USER
+          valueFrom:
+            configMapKeyRef:
+              name: sql-config1
+              key: username
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sql-secret1
+              key: password
+        volumeMounts:
+        - name: sql-storage
+          mountPath: /var/lib/mysql
+  volumeClaimTemplates:
+  - metadata:
+      name: sql-storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 10Gi
